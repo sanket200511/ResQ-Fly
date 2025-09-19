@@ -3,15 +3,16 @@ import json
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import websockets
 from cryptography.fernet import Fernet
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, APIRouter
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, APIRouter, Depends, Cookie
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from starlette.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import socket
@@ -20,6 +21,9 @@ from pymavlink.dialects.v20 import common as mavlink
 import threading
 import struct
 from emergentintegrations.llm.chat import LlmChat, UserMessage
+import bcrypt
+import jwt
+from starlette.responses import JSONResponse
 
 # Configuration
 ROOT_DIR = Path(__file__).parent
