@@ -44,6 +44,8 @@ const useStore = create((set, get) => ({
   selectedDrone: null,
   showCamera: false,
   showSettings: false,
+  showMissions: true,
+  showDrones: false,
   aiEnabled: false,
   
   // Safety scoring
