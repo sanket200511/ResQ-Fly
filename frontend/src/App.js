@@ -22,8 +22,11 @@ import {
   Pause,
   Activity,
   Navigation,
-  Zap
+  Zap,
+  List,
+  Users
 } from 'lucide-react';
+import MissionPanel from './components/missions/MissionPanel';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
