@@ -48,6 +48,73 @@ telemetry_buffer = []
 ai_enabled = False
 ai_settings = {}
 
+# JWT Configuration
+JWT_SECRET = os.environ.get('JWT_SECRET', 'resqfly-secret-key-change-in-production')
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRATION_HOURS = 24
+REFRESH_TOKEN_HOURS = 24 * 7  # 7 days
+
+security = HTTPBearer()
+
+# Password hashing
+def hash_password(password: str) -> str:
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+# JWT token functions
+def create_access_token(user_data: dict) -> str:
+    payload = {
+        'user_id': user_data['id'],
+        'email': user_data['email'],
+        'role': user_data.get('role', 'Pilot'),
+        'exp': datetime.utcnow() + timedelta(hours=JWT_EXPIRATION_HOURS),
+        'iat': datetime.utcnow(),
+        'type': 'access'
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def create_refresh_token(user_id: str) -> str:
+    payload = {
+        'user_id': user_id,
+        'exp': datetime.utcnow() + timedelta(hours=REFRESH_TOKEN_HOURS),
+        'iat': datetime.utcnow(),
+        'type': 'refresh'
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+def verify_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+# Authentication dependency
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    token = credentials.credentials
+    payload = verify_token(token)
+    
+    user = await db.users.find_one({"id": payload['user_id']}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+    
+    return user
+
+# Role-based access control
+def require_roles(allowed_roles: List[str]):
+    def role_checker(current_user: dict = Depends(get_current_user)):
+        if current_user['role'] not in allowed_roles:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Access denied. Required roles: {', '.join(allowed_roles)}"
+            )
+        return current_user
+    return role_checker
+
 # Encryption for API keys
 def get_encryption_key():
     key = os.environ.get('ENCRYPTION_KEY')
