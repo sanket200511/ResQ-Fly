@@ -599,7 +599,11 @@ const App = () => {
     showCamera, 
     toggleCamera, 
     showSettings,
-    toggleSettings 
+    toggleSettings,
+    showMissions,
+    toggleMissions,
+    showDrones,
+    toggleDrones
   } = useStore();
   
   const { fetchDrones, fetchMissions, fetchAISettings } = useAPI();
@@ -628,6 +632,30 @@ const App = () => {
           
           <div className="flex items-center gap-2">
             <button
+              onClick={toggleMissions}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border backdrop-blur-md transition-colors ${
+                showMissions 
+                  ? 'bg-green-500/20 text-green-400 border-green-500/30' 
+                  : 'bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30'
+              }`}
+            >
+              <List size={18} />
+              <span className="text-sm">Missions</span>
+            </button>
+            
+            <button
+              onClick={toggleDrones}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border backdrop-blur-md transition-colors ${
+                showDrones 
+                  ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' 
+                  : 'bg-gray-500/20 text-gray-400 border-gray-500/30 hover:bg-gray-500/30'
+              }`}
+            >
+              <Users size={18} />
+              <span className="text-sm">Drones</span>
+            </button>
+            
+            <button
               onClick={toggleCamera}
               className={`p-2 rounded-lg border backdrop-blur-md transition-colors ${
                 showCamera 
@@ -650,6 +678,32 @@ const App = () => {
       
       {/* Main content */}
       <div className="h-full pt-20 flex">
+        {/* Left sidebar - Mission/Drone Management */}
+        <AnimatePresence>
+          {(showMissions || showDrones) && (
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 400, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="bg-black/40 backdrop-blur-md border-r border-white/10 flex flex-col overflow-hidden"
+            >
+              {showMissions && (
+                <MissionPanel className="flex-1 border-0 rounded-none" />
+              )}
+              
+              {showDrones && (
+                <div className="flex-1 p-4">
+                  <h2 className="text-xl font-bold text-white mb-4">Drone Fleet</h2>
+                  <div className="text-gray-400 text-center py-8">
+                    <Users size={32} className="mx-auto mb-2 opacity-50" />
+                    <p>Drone management coming soon...</p>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Map area */}
         <div className="flex-1 relative">
           <MapComponent />
