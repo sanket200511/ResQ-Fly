@@ -430,6 +430,176 @@ async def broadcast_telemetry(telemetry: TelemetryData):
 async def root():
     return {"message": "ResQFly API v1.0", "status": "operational"}
 
+# Authentication endpoints
+@api_router.post("/auth/register", response_model=TokenResponse)
+async def register(user_data: UserCreate):
+    # Check if user already exists
+    existing_user = await db.users.find_one({"email": user_data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User with this email already exists")
+    
+    # Create new user
+    user = User(
+        name=user_data.name,
+        email=user_data.email,
+        password_hash=hash_password(user_data.password),
+        role=user_data.role,
+        org=user_data.org
+    )
+    
+    # Save user to database
+    user_dict = user.dict()
+    await db.users.insert_one(user_dict)
+    
+    # Create tokens
+    access_token = create_access_token(user_dict)
+    refresh_token = create_refresh_token(user.id)
+    
+    # Create response user object (without password hash)
+    user_response = UserResponse(**{k: v for k, v in user_dict.items() if k != 'password_hash'})
+    
+    response = JSONResponse(content={
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": user_response.dict()
+    })
+    
+    # Set httpOnly cookies
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=JWT_EXPIRATION_HOURS * 3600
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=REFRESH_TOKEN_HOURS * 3600
+    )
+    
+    return response
+
+@api_router.post("/auth/login", response_model=TokenResponse)
+async def login(login_data: UserLogin):
+    # Find user by email
+    user = await db.users.find_one({"email": login_data.email})
+    if not user or not verify_password(login_data.password, user['password_hash']):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if not user.get('is_active', True):
+        raise HTTPException(status_code=401, detail="Account is deactivated")
+    
+    # Update last login
+    await db.users.update_one(
+        {"id": user['id']},
+        {"$set": {"last_login": datetime.now(timezone.utc)}}
+    )
+    
+    # Create tokens
+    access_token = create_access_token(user)
+    refresh_token = create_refresh_token(user['id'])
+    
+    # Create response user object (without password hash)
+    user_response = UserResponse(**{k: v for k, v in user.items() if k != 'password_hash'})
+    
+    response = JSONResponse(content={
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": user_response.dict()
+    })
+    
+    # Set httpOnly cookies
+    response.set_cookie(
+        key="access_token",
+        value=access_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=JWT_EXPIRATION_HOURS * 3600
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="strict",
+        max_age=REFRESH_TOKEN_HOURS * 3600
+    )
+    
+    return response
+
+@api_router.post("/auth/logout")
+async def logout():
+    response = JSONResponse(content={"message": "Logged out successfully"})
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+    return response
+
+@api_router.post("/auth/refresh", response_model=TokenResponse)
+async def refresh_token(refresh_token_cookie: str = Cookie(None, alias="refresh_token")):
+    if not refresh_token_cookie:
+        raise HTTPException(status_code=401, detail="Refresh token not found")
+    
+    try:
+        payload = verify_token(refresh_token_cookie)
+        if payload.get('type') != 'refresh':
+            raise HTTPException(status_code=401, detail="Invalid token type")
+        
+        # Get user from database
+        user = await db.users.find_one({"id": payload['user_id']})
+        if not user or not user.get('is_active', True):
+            raise HTTPException(status_code=401, detail="User not found or inactive")
+        
+        # Create new tokens
+        access_token = create_access_token(user)
+        new_refresh_token = create_refresh_token(user['id'])
+        
+        # Create response user object
+        user_response = UserResponse(**{k: v for k, v in user.items() if k != 'password_hash'})
+        
+        response = JSONResponse(content={
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+            "user": user_response.dict()
+        })
+        
+        # Update cookies
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=JWT_EXPIRATION_HOURS * 3600
+        )
+        response.set_cookie(
+            key="refresh_token",
+            value=new_refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            max_age=REFRESH_TOKEN_HOURS * 3600
+        )
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid refresh token")
+
+@api_router.get("/auth/me", response_model=UserResponse)
+async def get_current_user_info(current_user: dict = Depends(get_current_user)):
+    return UserResponse(**{k: v for k, v in current_user.items() if k != 'password_hash'})
+
 @api_router.get("/health")
 async def health_check():
     return {
