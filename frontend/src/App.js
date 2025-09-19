@@ -59,6 +59,8 @@ const useStore = create((set, get) => ({
   setSelectedDrone: (drone) => set({ selectedDrone: drone }),
   toggleCamera: () => set(state => ({ showCamera: !state.showCamera })),
   toggleSettings: () => set(state => ({ showSettings: !state.showSettings })),
+  toggleMissions: () => set(state => ({ showMissions: !state.showMissions })),
+  toggleDrones: () => set(state => ({ showDrones: !state.showDrones })),
   setSafetyScore: (score) => set({ safetyScore: score }),
   setAIEnabled: (enabled) => set({ aiEnabled: enabled })
 }));
