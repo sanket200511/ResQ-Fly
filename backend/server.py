@@ -126,6 +126,43 @@ def get_encryption_key():
 cipher = Fernet(get_encryption_key())
 
 # Pydantic Models
+class User(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: EmailStr
+    password_hash: str
+    role: str = "Pilot"  # Admin, Dispatcher, Pilot, Field
+    org: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_login: Optional[datetime] = None
+    is_active: bool = True
+
+class UserCreate(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+    role: str = "Pilot"
+    org: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    role: str
+    org: str
+    created_at: datetime
+    last_login: Optional[datetime]
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str = "bearer"
+    user: UserResponse
+
 class TelemetryData(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     drone_id: str
