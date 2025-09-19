@@ -612,7 +612,7 @@ const App = () => {
       <div className="absolute top-0 left-0 right-0 z-20 bg-black/20 backdrop-blur-md border-b border-white/10">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <Plane className="text-green-400" size={32} />
+            <img src="/resqfly-logo.svg" alt="ResQFly" className="w-8 h-8" />
             <div>
               <h1 className="text-2xl font-bold">ResQFly</h1>
               <p className="text-sm text-gray-400">Disaster Response Drone System</p>
