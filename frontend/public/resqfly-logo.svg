@@ -1,0 +1,29 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Drone body -->
+  <ellipse cx="60" cy="60" rx="15" ry="8" fill="#00ff88" opacity="0.9"/>
+  
+  <!-- Drone arms -->
+  <line x1="35" y1="45" x2="85" y2="75" stroke="#00ff88" stroke-width="3" stroke-linecap="round"/>
+  <line x1="85" y1="45" x2="35" y2="75" stroke="#00ff88" stroke-width="3" stroke-linecap="round"/>
+  
+  <!-- Propellers -->
+  <circle cx="35" cy="45" r="8" fill="none" stroke="#00ff88" stroke-width="2" opacity="0.7"/>
+  <circle cx="85" cy="45" r="8" fill="none" stroke="#00ff88" stroke-width="2" opacity="0.7"/>
+  <circle cx="85" cy="75" r="8" fill="none" stroke="#00ff88" stroke-width="2" opacity="0.7"/>
+  <circle cx="35" cy="75" r="8" fill="none" stroke="#00ff88" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Medical payload -->
+  <rect x="50" y="75" width="20" height="16" rx="2" fill="#ffffff" stroke="#00ff88" stroke-width="2"/>
+  
+  <!-- Medical cross -->
+  <rect x="57" y="78" width="6" height="10" fill="#ff4444"/>
+  <rect x="54" y="81" width="12" height="4" fill="#ff4444"/>
+  
+  <!-- Connection lines -->
+  <line x1="60" y1="68" x2="60" y2="75" stroke="#00ff88" stroke-width="2"/>
+  
+  <!-- GPS/Signal indicator -->
+  <circle cx="60" cy="35" r="3" fill="#00ff88" opacity="0.8"/>
+  <circle cx="60" cy="35" r="6" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.4"/>
+  <circle cx="60" cy="35" r="9" fill="none" stroke="#00ff88" stroke-width="1" opacity="0.2"/>
+</svg>
